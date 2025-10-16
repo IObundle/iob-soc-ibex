@@ -15,16 +15,6 @@ USE_INTMEM ?= 1
 USE_EXTMEM ?= 0
 INIT_MEM ?= 1
 
-# TMR config generation parameters
-# for fatori-v usage
-TMR_SCRIPT   		?= select_tmr.py
-TMR_WRAP_FILE     	?= wrapped_registers.json
-TMR_PERCENT 		?= 0
-TMR_SEED     		?=
-TMR_FORCED_FILE   	?= forced_enabled_files.json         	# JSON with forced-enable registers/files
-TMR_FILE_INCLUDE  	?= 1        							# set to 1 to include forced regs in percentage
-TMR_DIS_FLAGS     	?= dis_flags.json         				# JSON with disable flags
-VERBOSE           	?= 1        							# set to 1 for debug output
 
 VERSION ?=$(shell cat iob_soc.py | grep version | cut -d '"' -f 4)
 
@@ -41,18 +31,6 @@ ibex-setup:
 
 	@echo "=== Copying Ibex files to build directory ==="
 	$(MAKE) -C submodules/iob_ibex copy-ibex COPY_DIR=../../../$(CORE)_V$(VERSION)/hardware/src/
-
-	@echo "=== Generating TMR configuration ==="
-	$(MAKE) -C submodules/iob_ibex tmr-config \
-		TMR_FINAL_FOLDER=../../../$(CORE)_V$(VERSION)/hardware/src \
-		TMR_SCRIPT=$(TMR_SCRIPT) \
-		TMR_WRAP_FILE=$(TMR_WRAP_FILE) \
-		TMR_FORCED_FILE=$(TMR_FORCED_FILE) \
-		TMR_FILE_INCLUDE=$(TMR_FILE_INCLUDE) \
-		TMR_DIS_FLAGS=$(TMR_DIS_FLAGS) \
-		TMR_PERCENT=$(TMR_PERCENT) \
-		TMR_SEED=$(TMR_SEED) \
-		VERBOSE=$(VERBOSE)
 
 	@echo "=== Cleaning temporary Ibex build files ==="
 	$(MAKE) -C submodules/iob_ibex clean-ibex
