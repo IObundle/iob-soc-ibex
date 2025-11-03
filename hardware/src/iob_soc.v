@@ -17,10 +17,10 @@ module iob_soc #(
    output              bootrom_mem_clk_o,
    output     [10-1:0] bootrom_mem_addr_o,
    output              bootrom_mem_en_o,
-   input  reg [32-1:0] bootrom_mem_r_data_i,
+   input [32-1:0] bootrom_mem_r_data_i,
    // external_mem_bus_m
    output              ext_mem_clk_o,
-   input  reg [32-1:0] ext_mem_r_data_i,
+   input  [32-1:0] ext_mem_r_data_i,
    output              ext_mem_r_en_o,
    output     [13-1:0] ext_mem_r_addr_o,
    output     [32-1:0] ext_mem_w_data_o,
@@ -113,8 +113,8 @@ module iob_soc #(
    // unused_interconnect_bits
    wire [             17-1:0] unused_m0_araddr_bits;
    wire [             17-1:0] unused_m0_awaddr_bits;
-   wire [32 - AXI_ADDR_W-1:0] unused_m1_araddr_bits;
-   wire [32 - AXI_ADDR_W-1:0] unused_m1_awaddr_bits;
+   // wire [32 - AXI_ADDR_W-1:0] unused_m1_araddr_bits;
+   // wire [32 - AXI_ADDR_W-1:0] unused_m1_awaddr_bits;
    wire [             19-1:0] unused_m2_araddr_bits;
    wire [             19-1:0] unused_m2_awaddr_bits;
    wire [              2-1:0] unused_m3_araddr_bits;
@@ -275,11 +275,30 @@ module iob_soc #(
    wire                       plic_cbus_iob_ready;
 
 
+   wire cpu_i_axi_arid_1b, cpu_i_axi_awid_1b;
+   wire cpu_i_axi_rid_1b,  cpu_i_axi_bid_1b;
+   wire cpu_d_axi_arid_1b, cpu_d_axi_awid_1b;
+   wire cpu_d_axi_rid_1b,  cpu_d_axi_bid_1b;
+
+   // Resize IDs to AXI_ID_W
+   assign cpu_i_axi_arid = {{(AXI_ID_W-1){1'b0}}, cpu_i_axi_arid_1b};
+   assign cpu_i_axi_awid = {{(AXI_ID_W-1){1'b0}}, cpu_i_axi_awid_1b};
+
+   assign cpu_i_axi_rid_1b = cpu_i_axi_rid[0];
+   assign cpu_i_axi_bid_1b = cpu_i_axi_bid[0];
+
+   assign cpu_d_axi_arid = {{(AXI_ID_W-1){1'b0}}, cpu_d_axi_arid_1b};
+   assign cpu_d_axi_awid = {{(AXI_ID_W-1){1'b0}}, cpu_d_axi_awid_1b};
+
+   assign cpu_d_axi_rid_1b = cpu_d_axi_rid[0];
+   assign cpu_d_axi_bid_1b = cpu_d_axi_bid[0];
+
+
    // RISC-V CPU instance
    iob_ibex #(
       .AXI_ID_W  (1),
       .AXI_ADDR_W(32),
-      .AXI_DATA_W(32),
+      .AXI_DATA_W(AXI_DATA_W),
       .AXI_LEN_W (AXI_LEN_W)
    ) cpu (
       // clk_en_rst_s port
@@ -297,14 +316,14 @@ module iob_soc #(
       .ibus_axi_rresp_i  (cpu_i_axi_rresp),
       .ibus_axi_rvalid_i (cpu_i_axi_rvalid),
       .ibus_axi_rready_o (cpu_i_axi_rready),
-      .ibus_axi_arid_o   (cpu_i_axi_arid[0]),
+      .ibus_axi_arid_o   (cpu_i_axi_arid_1b),
       .ibus_axi_arlen_o  (cpu_i_axi_arlen),
       .ibus_axi_arsize_o (cpu_i_axi_arsize),
       .ibus_axi_arburst_o(cpu_i_axi_arburst),
       .ibus_axi_arlock_o (cpu_i_axi_arlock),
       .ibus_axi_arcache_o(cpu_i_axi_arcache),
       .ibus_axi_arqos_o  (cpu_i_axi_arqos),
-      .ibus_axi_rid_i    (cpu_i_axi_rid[0]),
+      .ibus_axi_rid_i    (cpu_i_axi_rid_1b),
       .ibus_axi_rlast_i  (cpu_i_axi_rlast),
       .ibus_axi_awaddr_o (cpu_i_axi_awaddr),
       .ibus_axi_awprot_o (cpu_i_axi_awprot),
@@ -317,7 +336,7 @@ module iob_soc #(
       .ibus_axi_bresp_i  (cpu_i_axi_bresp),
       .ibus_axi_bvalid_i (cpu_i_axi_bvalid),
       .ibus_axi_bready_o (cpu_i_axi_bready),
-      .ibus_axi_awid_o   (cpu_i_axi_awid[0]),
+      .ibus_axi_awid_o   (cpu_i_axi_awid_1b),
       .ibus_axi_awlen_o  (cpu_i_axi_awlen),
       .ibus_axi_awsize_o (cpu_i_axi_awsize),
       .ibus_axi_awburst_o(cpu_i_axi_awburst),
@@ -325,7 +344,7 @@ module iob_soc #(
       .ibus_axi_awcache_o(cpu_i_axi_awcache),
       .ibus_axi_awqos_o  (cpu_i_axi_awqos),
       .ibus_axi_wlast_o  (cpu_i_axi_wlast),
-      .ibus_axi_bid_i    (cpu_i_axi_bid[0]),
+      .ibus_axi_bid_i    (cpu_i_axi_bid_1b),
       // d_bus_m port
       .dbus_axi_araddr_o (cpu_d_axi_araddr),
       .dbus_axi_arprot_o (cpu_d_axi_arprot),
@@ -335,14 +354,14 @@ module iob_soc #(
       .dbus_axi_rresp_i  (cpu_d_axi_rresp),
       .dbus_axi_rvalid_i (cpu_d_axi_rvalid),
       .dbus_axi_rready_o (cpu_d_axi_rready),
-      .dbus_axi_arid_o   (cpu_d_axi_arid[0]),
+      .dbus_axi_arid_o   (cpu_d_axi_arid_1b),
       .dbus_axi_arlen_o  (cpu_d_axi_arlen),
       .dbus_axi_arsize_o (cpu_d_axi_arsize),
       .dbus_axi_arburst_o(cpu_d_axi_arburst),
       .dbus_axi_arlock_o (cpu_d_axi_arlock),
       .dbus_axi_arcache_o(cpu_d_axi_arcache),
       .dbus_axi_arqos_o  (cpu_d_axi_arqos),
-      .dbus_axi_rid_i    (cpu_d_axi_rid[0]),
+      .dbus_axi_rid_i    (cpu_d_axi_rid_1b),
       .dbus_axi_rlast_i  (cpu_d_axi_rlast),
       .dbus_axi_awaddr_o (cpu_d_axi_awaddr),
       .dbus_axi_awprot_o (cpu_d_axi_awprot),
@@ -355,7 +374,7 @@ module iob_soc #(
       .dbus_axi_bresp_i  (cpu_d_axi_bresp),
       .dbus_axi_bvalid_i (cpu_d_axi_bvalid),
       .dbus_axi_bready_o (cpu_d_axi_bready),
-      .dbus_axi_awid_o   (cpu_d_axi_awid[0]),
+      .dbus_axi_awid_o   (cpu_d_axi_awid_1b),
       .dbus_axi_awlen_o  (cpu_d_axi_awlen),
       .dbus_axi_awsize_o (cpu_d_axi_awsize),
       .dbus_axi_awburst_o(cpu_d_axi_awburst),
@@ -363,7 +382,7 @@ module iob_soc #(
       .dbus_axi_awcache_o(cpu_d_axi_awcache),
       .dbus_axi_awqos_o  (cpu_d_axi_awqos),
       .dbus_axi_wlast_o  (cpu_d_axi_wlast),
-      .dbus_axi_bid_i    (cpu_d_axi_bid[0]),
+      .dbus_axi_bid_i    (cpu_d_axi_bid_1b),
       // clint_cbus_s port
       .clint_iob_valid_i (clint_cbus_iob_valid),
       .clint_iob_addr_i  (clint_cbus_iob_addr[16-2-1:0]),
