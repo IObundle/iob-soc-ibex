@@ -7,13 +7,14 @@ CORE := iob_soc
 SIMULATOR ?= xcelium
 SYNTHESIZER ?= yosys
 LINTER ?= spyglass
-BOARD ?= cyclonev_gt_dk
+BOARD ?= iob_aes_ku040_db_g
 
 BUILD_DIR ?= $(shell nix-shell --run "py2hwsw $(CORE) print_build_dir")
 
 USE_INTMEM ?= 1
 USE_EXTMEM ?= 0
 INIT_MEM ?= 1
+
 
 VERSION ?=$(shell cat iob_soc.py | grep version | cut -d '"' -f 4)
 
@@ -25,7 +26,15 @@ setup:
 	nix-shell --run "py2hwsw $(CORE) setup --no_verilog_lint --py_params 'use_intmem=$(USE_INTMEM):use_extmem=$(USE_EXTMEM):init_mem=$(INIT_MEM)' $(EXTRA_ARGS)"
 
 ibex-setup:
-	make -C submodules/iob_ibex/ generate-ibex && make -C submodules/iob_ibex/ copy-ibex COPY_DIR=../../../$(CORE)_V$(VERSION)/hardware/src/ && make -C submodules/iob_ibex/ clean-ibex
+	@echo "=== Generating Ibex RTL files ==="
+	$(MAKE) -C submodules/iob_ibex generate-ibex
+
+	@echo "=== Copying Ibex files to build directory ==="
+	$(MAKE) -C submodules/iob_ibex copy-ibex COPY_DIR=../../../$(CORE)_V$(VERSION)/hardware/src/
+
+	@echo "=== Cleaning temporary Ibex build files ==="
+	$(MAKE) -C submodules/iob_ibex clean-ibex
+
 
 pc-emul-run:
 	nix-shell --run "make clean setup"
@@ -59,7 +68,7 @@ sim-test:
 fpga-run:
 	nix-shell --run "make clean setup"
 	make ibex-setup 
-	nix-shell "make -C ../$(CORE)_V$(VERSION)/ fpga-fw-build BOARD=$(BOARD)"
+	nix-shell --run "make -C ../$(CORE)_V$(VERSION)/ fpga-fw-build BOARD=$(BOARD)"
 	make -C ../$(CORE)_V$(VERSION)/ fpga-run BOARD=$(BOARD)
 
 fpga-test:

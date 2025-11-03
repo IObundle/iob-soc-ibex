@@ -32,7 +32,7 @@ int main() {
   printf_init(&uart_putc);
 
   // test puts
-  uart_puts("\n\n\nHello world from IOb-SoC!\n\n\n");
+  uart_puts("\n\n\nHello world from Fatori-V!\n\n\n");
 
   // test printf with floats
   printf("Value of Pi = %f\n\n", 3.1415);

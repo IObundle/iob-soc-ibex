@@ -6,22 +6,39 @@
 def setup(py_params_dict):
     # Py2hwsw dictionary describing current core
     core_dict = {
-        "version": "0.8",
+        "version": "1.0",
         "parent": {
             # IOb-SoC is a child core of iob_system: https://github.com/IObundle/py2hwsw/tree/main/py2hwsw/lib/hardware/iob_system
             # IOb-SoC will inherit all attributes/files from the iob_system core.
             "core_name": "iob_system",
+            "generate_hw": False,
             # Every parameter in the lines below will be passed to the iob_system parent core.
             **py_params_dict,
             "cpu": "iob_ibex",
             # Memory address width
             "mem_addr_w": 15,  # the default 18 are not visible in xcelium
+            # "data_w": 39, # 32bits data + 7 parity
             "system_attributes": {
+                "confs": [
+                    # macros
+                    {
+                        "name": "DATA_W",
+                        "descr": "Testbench data bus width.",
+                        "type": "M",
+                        "val": 32,  # 32bits data + 7 parity
+                        "min": "1",
+                        "max": "39",
+                    },
+                    {
+                        "name": "BOARD",
+                        "descr": "Default FPGA board",
+                        "type": "M",
+                        "val": "iob_aes_ku040_db_g",
+                    },
+                ],
                 # Every attribute in this dictionary will override/append to the ones of the iob_system parent core.
                 "board_list": [
                     "iob_aes_ku040_db_g",
-                    "iob_cyclonev_gt_dk",
-                    "iob_zybo_z7",
                 ],
                 "ports": [
                     {
